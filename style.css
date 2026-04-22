@@ -348,8 +348,22 @@ body{
 
 /* Responsive */
 /* Responsive */
-@media (max-width: 768px){
-  .app-screen{grid-template-columns:1fr}
-  .sidebar{position:absolute;inset:0;z-index:10;transform:translateX(-100%);transition:transform .25s}
-  .sidebar.open{transform:translateX(0)}
+/* Desktop override — ensure sidebar is always visible */
+@media (min-width: 769px) {
+  .sidebar {
+    position: relative !important;
+    transform: none !important;
+    width: 280px !important;
+    box-shadow: none !important;
+  }
+  .sidebar-backdrop { display: none !important; }
+  .menu-btn { display: none !important; }
+  .app-screen {
+    display: grid !important;
+    grid-template-columns: 280px 1fr !important;
+  }
+  .chat { height: 100vh; }
+  .encryption-badge span { display: inline !important; }
+  #leave-room-btn .mono { display: inline !important; }
+  #leave-room-btn { padding: 6px 12px !important; }
 }
