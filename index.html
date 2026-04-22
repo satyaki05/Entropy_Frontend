@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Entropy — Secure Real-Time Messaging</title>
+    <meta name="description" content="NEXCHAT —  secure real-time chat encryption."/>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/lucide-static@latest/font/lucide.css">
+    <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<!-- Grid background -->
+<div class="grid-bg"></div>
+<div class="glow glow-1"></div>
+<div class="glow glow-2"></div>
+
+<!-- ============ AUTH SCREEN ============ -->
+<section id="auth-screen" class="auth-screen">
+    <div class="auth-card">
+        <div class="auth-brand">
+            <div class="logo-mark">
+                <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="24" height="24"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        class="lucide lucide-shield-check">
+                    <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/>
+                    <path d="m9 12 2 2 4-4"/>
+                </svg>
+            </div>
+            <div>
+                <h1 >E<span class="brand-name">NTROPY</span></h1>
+                <p class="brand-tag mono"> secure.real-time.messaging</p>
+            </div>
+        </div>
+
+        <div class="auth-tabs">
+            <button class="auth-tab active" data-tab="login">Login</button>
+            <button class="auth-tab" data-tab="signup">Sign Up</button>
+        </div>
+
+        <form id="auth-form" class="auth-form" autocomplete="off">
+
+            <label class="field">
+                <span class="mono">username</span>
+                <input type="text" id="username" required placeholder="neo" />
+            </label>
+            <label class="field" id="email-field" style="display:none">
+                <span class="mono">email</span>
+                <input type="email" id="email" placeholder="you@domain.com" />
+            </label>
+            <label class="field">
+                <span class="mono">password</span>
+                <input type="password" id="password" required placeholder="••••••••" />
+            </label>
+            <button type="submit" class="btn-primary">
+                <i class="lucide lucide-log-in"></i>
+                <span id="auth-submit-label">Authenticate</span>
+            </button>
+            <p id="auth-error" class="auth-error mono"></p>
+        </form>
+
+        <p class="auth-foot mono">[ Keeps You Together ]</p>
+    </div>
+</section>
+
+<!-- ============ APP SCREEN ============ -->
+<section id="app-screen" class="app-screen hidden">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-head">
+            <div>
+                <h2 >E<span>NTROPY</span></h2>
+                <p class="mono micro" id="user-tag">@user</p>
+            </div>
+            <button class="btn-sm danger" onclick="logout()">
+                <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="16" height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        style="margin-right: 8px; vertical-align: middle;">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+                </svg>
+                Logout
+            </button>
+        </div>
+
+        <div class="sidebar-actions">
+            <button id="create-room-btn" class="btn-ghost">
+                <i class="lucide lucide-plus"></i> Create
+            </button>
+            <button id="join-room-btn" class="btn-ghost">
+                <i class="lucide lucide-link"></i> Join
+            </button>
+        </div>
+
+        <div class="sidebar-section">
+            <p class="mono micro section-title">my_rooms</p>
+            <ul id="room-list" class="room-list"></ul>
+        </div>
+
+        <div class="sidebar-foot mono micro">
+            <span class="dot"></span><span id="ws-status">disconnected</span>
+        </div>
+    </aside>
+
+    <!-- Chat -->
+    <main class="chat">
+        <header class="chat-head">
+            <div class="chat-head-info">
+                <h3 id="room-title">Select a room</h3>
+                <p class="mono micro" id="room-meta">no.room.selected</p>
+            </div>
+            <!-- FIX: added missing closing </div> for chat-head-actions -->
+            <div class="chat-head-actions">
+                <button id="leave-room-btn" class="btn-sm danger hidden" onclick="leaveRoomAction()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px;">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+                    </svg>
+                    <span class="mono micro">leave_session</span>
+                </button>
+                <div class="encryption-badge" title="AES-256 End-to-End Encryption Active">
+                    <i class="lucide lucide-shield-check"></i>
+                    <span class="mono">Encrypted</span>
+                </div>
+            </div>
+        </header>
+
+        <div id="messages" class="messages">
+            <div class="empty-state">
+                <i class="lucide lucide-message-square-lock"></i>
+                <p>Pick a room from the sidebar to start chatting</p>
+                <p class="mono micro"> or create one</p>
+            </div>
+        </div>
+
+        <form id="composer" class="composer hidden">
+            <div class="composer-inner">
+                <input id="composer-input" type="text" placeholder="Type a message…" autocomplete="off"/>
+                <button type="submit" class="btn-send">
+                    <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="20" height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round">
+                        <path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/>
+                    </svg>
+                </button>
+            </div>
+            <p class="mono micro composer-hint">press enter to send · encrypted in transit</p>
+        </form>
+    </main>
+</section>
+
+<!-- ============ MODAL ============ -->
+<div id="modal" class="modal hidden">
+    <div class="modal-card">
+        <div class="modal-head">
+            <h3 id="modal-title">Create Room</h3>
+            <button class="icon-btn" id="modal-close"><i class="lucide lucide-x"></i></button>
+        </div>
+        <form id="modal-form">
+            <label class="field">
+                <span class="mono" id="modal-label">room_name</span>
+                <input type="text" id="modal-input" required />
+            </label>
+            <button type="submit" class="btn-primary"><span id="modal-submit">Create</span></button>
+            <p id="modal-error" class="auth-error mono"></p>
+        </form>
+    </div>
+</div>
+
+<!-- Libs -->
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.6.1/dist/sockjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<script src="app.js"></script>
+</body>
+</html>
