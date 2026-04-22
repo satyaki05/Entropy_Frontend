@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
+<!-- Grid background -->
 <div class="grid-bg"></div>
 <div class="glow glow-1"></div>
 <div class="glow glow-2"></div>
@@ -21,14 +22,23 @@
     <div class="auth-card">
         <div class="auth-brand">
             <div class="logo-mark">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-shield-check">
+                <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="24" height="24"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        class="lucide lucide-shield-check">
                     <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/>
                     <path d="m9 12 2 2 4-4"/>
                 </svg>
             </div>
             <div>
-                <h1>E<span class="brand-name">NTROPY</span></h1>
-                <p class="brand-tag mono">secure.real-time.messaging</p>
+                <h1 >E<span class="brand-name">NTROPY</span></h1>
+                <p class="brand-tag mono"> secure.real-time.messaging</p>
             </div>
         </div>
 
@@ -38,6 +48,7 @@
         </div>
 
         <form id="auth-form" class="auth-form" autocomplete="off">
+
             <label class="field">
                 <span class="mono">username</span>
                 <input type="text" id="username" required placeholder="neo" />
@@ -63,19 +74,24 @@
 
 <!-- ============ APP SCREEN ============ -->
 <section id="app-screen" class="app-screen hidden">
-
-    <!-- Mobile backdrop — closes sidebar when tapped -->
-    <div class="sidebar-backdrop" id="sidebar-backdrop" onclick="closeSidebar()"></div>
-
     <!-- Sidebar -->
-    <aside class="sidebar" id="sidebar">
+    <aside class="sidebar">
         <div class="sidebar-head">
             <div>
-                <h2>E<span>NTROPY</span></h2>
+                <h2 >E<span>NTROPY</span></h2>
                 <p class="mono micro" id="user-tag">@user</p>
             </div>
             <button class="btn-sm danger" onclick="logout()">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px; vertical-align: middle;">
+                <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="16" height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        style="margin-right: 8px; vertical-align: middle;">
                     <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
                 </svg>
                 Logout
@@ -104,29 +120,11 @@
     <!-- Chat -->
     <main class="chat">
         <header class="chat-head">
-            <!-- Hamburger — only visible on mobile -->
-            <button class="mobile-menu-btn" id="menu-toggle" aria-label="Open Menu">
-    <svg 
-        xmlns="http://www.w3.org/2000/svg" 
-        width="24" 
-        height="24" 
-        viewBox="0 0 24 24" 
-        fill="none" 
-        stroke="currentColor" 
-        stroke-width="2" 
-        stroke-linecap="round" 
-        stroke-linejoin="round" 
-        class="lucide-icon">
-        <line x1="4" x2="20" y1="12" y2="12" />
-        <line x1="4" x2="20" y1="6" y2="6" />
-        <line x1="4" x2="20" y1="18" y2="18" />
-    </svg>
-</button>
             <div class="chat-head-info">
                 <h3 id="room-title">Select a room</h3>
                 <p class="mono micro" id="room-meta">no.room.selected</p>
             </div>
-
+            <!-- FIX: added missing closing </div> for chat-head-actions -->
             <div class="chat-head-actions">
                 <button id="leave-room-btn" class="btn-sm danger hidden" onclick="leaveRoomAction()">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px;">
@@ -145,7 +143,7 @@
             <div class="empty-state">
                 <i class="lucide lucide-message-square-lock"></i>
                 <p>Pick a room from the sidebar to start chatting</p>
-                <p class="mono micro">or create one</p>
+                <p class="mono micro"> or create one</p>
             </div>
         </div>
 
@@ -153,7 +151,15 @@
             <div class="composer-inner">
                 <input id="composer-input" type="text" placeholder="Type a message…" autocomplete="off"/>
                 <button type="submit" class="btn-send">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="20" height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round">
                         <path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/>
                     </svg>
                 </button>
@@ -181,23 +187,10 @@
     </div>
 </div>
 
+<!-- Libs -->
 <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.6.1/dist/sockjs.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
 <script src="https://unpkg.com/lucide@latest"></script>
 <script src="app.js"></script>
-<script>
-function openSidebar() {
-    document.getElementById('sidebar').classList.add('open');
-    document.getElementById('sidebar-backdrop').classList.add('open');
-}
-function closeSidebar() {
-    document.getElementById('sidebar').classList.remove('open');
-    document.getElementById('sidebar-backdrop').classList.remove('open');
-}
-// Close sidebar when a room is selected on mobile
-document.addEventListener('click', function(e) {
-    if (e.target.closest('.room-item')) closeSidebar();
-});
-</script>
 </body>
 </html>
