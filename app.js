@@ -404,3 +404,15 @@ function formatTime(ts) {
 function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 }
+function formatTime(ts) {
+  if (!ts) return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  // Handle both "2026-04-23T14:10:00" and "2026-04-23T14:10:00.000Z" formats
+  let d;
+  if (typeof ts === 'string' && !ts.endsWith('Z') && !ts.includes('+')) {
+    // Server sends without timezone — treat as UTC and convert to local
+    d = new Date(ts + 'Z');
+  } else {
+    d = new Date(ts);
+  }
+  return isNaN(d) ? ts : d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
