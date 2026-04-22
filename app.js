@@ -416,3 +416,25 @@ function formatTime(ts) {
   }
   return isNaN(d) ? ts : d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
+// Mobile Sidebar Toggle
+const menuBtn = $('menu-toggle');
+const sidebar = document.querySelector('.sidebar');
+
+if (menuBtn) {
+  menuBtn.addEventListener('click', () => {
+    sidebar.classList.toggle('mobile-open');
+  });
+}
+
+// Close sidebar when a room is selected (mobile only)
+document.addEventListener('click', (e) => {
+  if (window.innerWidth <= 768) {
+    if (e.target.closest('.room-item')) {
+      sidebar.classList.remove('mobile-open');
+    }
+    // Close if clicking outside the sidebar
+    if (!sidebar.contains(e.target) && !menuBtn.contains(e.target) && sidebar.classList.contains('mobile-open')) {
+      sidebar.classList.remove('mobile-open');
+    }
+  }
+});
