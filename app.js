@@ -422,12 +422,16 @@
 // Entropy — Frontend client for Spring Boot + STOMP/SockJS backend
 // =================================================================
 
+// =================================================================
+// Entropy — Frontend client for Spring Boot + STOMP/SockJS backend
+// =================================================================
+
 const BACKEND_URL = 'https://entropy-bjdu.onrender.com';
+
 const State = {
   apiBase: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-      ? 'http://localhost:8080'
-      : BACKEND_URL,
-
+    ? 'http://localhost:8080'
+    : BACKEND_URL,
   token: localStorage.getItem('nex_token') || null,
   username: localStorage.getItem('nex_user') || null,
   rooms: [],
@@ -445,7 +449,6 @@ const appScreen = $('app-screen');
 const authForm = $('auth-form');
 const authError = $('auth-error');
 const authSubmitLabel = $('auth-submit-label');
-const apiBaseInput = $('api-base');
 const usernameInput = $('username');
 const passwordInput = $('password');
 const userTag = $('user-tag');
@@ -459,22 +462,35 @@ const wsStatus = $('ws-status');
 const wsDot = document.querySelector('.sidebar-foot .dot');
 
 // ---------- Mobile sidebar toggle ----------
-(function setupMobileSidebar(){
-  const toggle = document.getElementById('sidebar-toggle');
-  const sidebar = document.querySelector('.sidebar');
-  if (!toggle || !sidebar) return;
-  const backdrop = document.createElement('div');
-  backdrop.className = 'sidebar-backdrop';
-  document.body.appendChild(backdrop);
-  const close = () => { sidebar.classList.remove('open'); backdrop.classList.remove('show'); };
-  const open  = () => { sidebar.classList.add('open');    backdrop.classList.add('show'); };
-  toggle.addEventListener('click', () => sidebar.classList.contains('open') ? close() : open());
-  backdrop.addEventListener('click', close);
-  // Auto-close when picking a room on mobile
-  document.getElementById('room-list')?.addEventListener('click', (e) => {
-    if (e.target.closest('.room-item') && window.matchMedia('(max-width: 720px)').matches) close();
-  });
-})();
+// FIX: single implementation, no duplicates
+const sidebarEl = document.querySelector('.sidebar');
+const sidebarToggleBtn = document.getElementById('sidebar-toggle');
+
+// Create backdrop once
+const backdropEl = document.createElement('div');
+backdropEl.className = 'sidebar-backdrop';
+document.body.appendChild(backdropEl);
+
+function openSidebar() {
+  sidebarEl?.classList.add('open');
+  backdropEl.classList.add('show');
+}
+function closeSidebar() {
+  sidebarEl?.classList.remove('open');
+  backdropEl.classList.remove('show');
+}
+
+sidebarToggleBtn?.addEventListener('click', () =>
+  sidebarEl?.classList.contains('open') ? closeSidebar() : openSidebar()
+);
+backdropEl.addEventListener('click', closeSidebar);
+
+// Auto-close sidebar when a room is picked on mobile
+document.addEventListener('click', (e) => {
+  if (e.target.closest('.room-item') && window.matchMedia('(max-width: 720px)').matches) {
+    closeSidebar();
+  }
+});
 
 // ---------- API helpers ----------
 async function api(path, opts = {}) {
@@ -505,8 +521,6 @@ document.querySelectorAll('.auth-tab').forEach(btn => {
 authForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   authError.textContent = '';
-//  State.apiBase = apiBaseInput.value.trim().replace(/\/$/, '');
-//  localStorage.setItem('nex_api', State.apiBase);
 
   const username = usernameInput.value.trim();
   const password = passwordInput.value;
@@ -546,7 +560,6 @@ function logout() {
 
 // ---------- Boot ----------
 function bootApp() {
-//  apiBaseInput.value = State.apiBase;
   authScreen.classList.add('hidden');
   appScreen.classList.remove('hidden');
   userTag.textContent = `@${State.username}`;
@@ -588,13 +601,14 @@ function renderRooms() {
 async function selectRoom(room) {
   if (State.currentRoom?.id == room.id) return;
 
-  // Leave previous
+  // Leave previous room's WebSocket subscription
   if (State.currentRoom && State.stomp?.connected) {
     try {
       State.stomp.send(`/app/chat.leave/${State.currentRoom.id}`, {},
         JSON.stringify({ content: '', senderUsername: State.username, type: 'LEAVE' }));
     } catch {}
     State.subscription?.unsubscribe();
+    delete activeSubscriptions[State.currentRoom.id];
   }
 
   State.currentRoom = room;
@@ -605,11 +619,10 @@ async function selectRoom(room) {
   messages.innerHTML = '';
   renderRooms();
 
-  // FIX 3: show leave button when a room is selected
   const leaveBtn = $('leave-room-btn');
   if (leaveBtn) leaveBtn.classList.remove('hidden');
 
-  // History
+  // Load history
   try {
     const history = await api(`/api/rooms/history/${room.id}`);
     (history || []).forEach(renderIncoming);
@@ -617,32 +630,44 @@ async function selectRoom(room) {
     addSystem(`could not load history: ${err.message}`);
   }
 
-  // Subscribe + join
+  // Subscribe to WebSocket room
   if (State.stomp?.connected) subscribeRoom(room.id);
 }
 
-// FIX 1 & 2: leaveRoomAction at top level scope, matching the onclick in HTML
+// ---------- Active subscriptions map — prevents double messages ----------
+const activeSubscriptions = {};
+
+function subscribeRoom(roomId) {
+  // FIX: don't subscribe twice to the same room
+  if (activeSubscriptions[roomId]) return;
+
+  activeSubscriptions[roomId] = State.stomp.subscribe(`/topic/room/${roomId}`, (frame) => {
+    try { renderIncoming(JSON.parse(frame.body)); } catch (e) { console.error(e); }
+  });
+
+  State.subscription = activeSubscriptions[roomId];
+
+  State.stomp.send(`/app/chat.join/${roomId}`, {},
+    JSON.stringify({ content: '', senderUsername: State.username, type: 'JOIN' }));
+}
+
 async function leaveRoomAction() {
   if (!State.currentRoom) return;
-
   if (!confirm(`Leave ${State.currentRoom.name}? You will lose access to this room's history.`)) return;
 
   try {
     const roomId = State.currentRoom.id;
 
-    // Notify others via WebSocket
     if (State.stomp?.connected) {
       State.stomp.send(`/app/chat.leave/${roomId}`, {},
         JSON.stringify({ content: '', senderUsername: State.username, type: 'LEAVE' }));
     }
 
-    // Unsubscribe locally
     State.subscription?.unsubscribe();
+    delete activeSubscriptions[roomId];
 
-    // Call backend DELETE
     await api(`/api/rooms/leave/${roomId}`, { method: 'DELETE' });
 
-    // Reset UI
     State.currentRoom = null;
     State.lastSender = null;
 
@@ -656,25 +681,15 @@ async function leaveRoomAction() {
       </div>`;
     composer.classList.add('hidden');
 
-    // Hide leave button again
     const leaveBtn = $('leave-room-btn');
     if (leaveBtn) leaveBtn.classList.add('hidden');
 
-    // Refresh sidebar
     await loadRooms();
 
   } catch (err) {
     console.error('Error leaving room:', err);
     alert(`// Error: ${err.message}`);
   }
-}
-
-function subscribeRoom(roomId) {
-  State.subscription = State.stomp.subscribe(`/topic/room/${roomId}`, (frame) => {
-    try { renderIncoming(JSON.parse(frame.body)); } catch (e) { console.error(e); }
-  });
-  State.stomp.send(`/app/chat.join/${roomId}`, {},
-    JSON.stringify({ content: '', senderUsername: State.username, type: 'JOIN' }));
 }
 
 // ---------- Modal (create/join) ----------
@@ -703,6 +718,7 @@ function openModal(mode) {
   modal.classList.remove('hidden');
   setTimeout(() => modalInput.focus(), 50);
 }
+
 $('create-room-btn').addEventListener('click', () => openModal('create'));
 $('join-room-btn').addEventListener('click', () => openModal('join'));
 $('modal-close').addEventListener('click', () => modal.classList.add('hidden'));
@@ -791,6 +807,7 @@ function renderIncoming(msg) {
   const isSelf = sender === State.username;
   const ts = formatTime(msg.timestamp);
 
+  // Group consecutive messages from same sender
   if (State.lastSender === sender) {
     const last = messages.querySelector('.msg-group:last-child .msg-bubbles');
     if (last) {
@@ -833,24 +850,18 @@ function addSystem(text) {
 
 function scrollBottom() { messages.scrollTop = messages.scrollHeight; }
 
+// FIX: single formatTime — handles UTC timestamps from server correctly
 function formatTime(ts) {
   if (!ts) return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  const d = new Date(ts);
+  let d;
+  if (typeof ts === 'string' && !ts.endsWith('Z') && !ts.includes('+')) {
+    d = new Date(ts + 'Z'); // treat as UTC, convert to local
+  } else {
+    d = new Date(ts);
+  }
   return isNaN(d) ? ts : d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
 function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
-}
-function formatTime(ts) {
-  if (!ts) return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  // Handle both "2026-04-23T14:10:00" and "2026-04-23T14:10:00.000Z" formats
-  let d;
-  if (typeof ts === 'string' && !ts.endsWith('Z') && !ts.includes('+')) {
-    // Server sends without timezone — treat as UTC and convert to local
-    d = new Date(ts + 'Z');
-  } else {
-    d = new Date(ts);
-  }
-  return isNaN(d) ? ts : d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
